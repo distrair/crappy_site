@@ -7,6 +7,7 @@ use Yii;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 use yii\web\User;
 
@@ -23,24 +24,35 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
+                'only' => [
+                    'index'
+                ],
                 'rules' => [
                     [
-                        'actions' => ['login', 'error'],
+                        'actions' => ['index'],
                         'allow' => true,
+                        'matchCallback' => function ($rule, $action) {
+                            if (Yii::$app->user->identity->admin !== 1) {
+                                Yii::$app->user->logout();
+                                return false;
+                            }
+                            return true;
+                        },
+                            'roles' => ['@'],
                     ],
                     [
-                        'actions' => ['logout', 'index'],
+                        'actions' => ['logout'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
                 ],
             ],
             'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
+                                'class' => VerbFilter::class,
+                                'actions' => [
+                                    'logout' => ['post'],
+                                ],
+                            ],
         ];
     }
 
